@@ -14,6 +14,7 @@ import {
 import GroupedPieChart from "../components/GroupedPieChart";
 import AssetPnLChart from "../components/AssetPnLChart";
 import RiskMeter from "../components/RiskMeter";
+import ErrorBanner from "../components/ErrorBanner";
 import {
   fetchMarketPrice,
   LIVE_PRICE_TYPES,
@@ -46,30 +47,65 @@ export default function Investments() {
   const [purchasePrice, setPurchasePrice] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
   const [priceErrors, setPriceErrors] = useState({});
+  const [formError, setFormError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
+    setError(null);
     const q = query(
       collection(db, "investments"),
       where("userId", "==", user.uid),
     );
-    return onSnapshot(q, (snap) =>
-      setAssets(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    return onSnapshot(
+      q,
+      (snap) => {
+        setAssets(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Ошибка загрузки инвестиций:", err);
+        setError(
+          "Не удалось загрузить портфель. Проверь соединение с интернетом.",
+        );
+        setLoading(false);
+      },
     );
   }, [user]);
 
   async function handleAdd(e) {
     e.preventDefault();
-    if (!name.trim() || !broker.trim() || !quantity || !purchasePrice) return;
+    setFormError("");
+
+    if (!name.trim()) {
+      setFormError("Укажи название актива");
+      return;
+    }
+    if (!broker.trim()) {
+      setFormError("Укажи брокера или банк");
+      return;
+    }
+    const numQuantity = Number(quantity);
+    if (!quantity || Number.isNaN(numQuantity) || numQuantity <= 0) {
+      setFormError("Количество должно быть положительным числом");
+      return;
+    }
+    const numPrice = Number(purchasePrice);
+    if (!purchasePrice || Number.isNaN(numPrice) || numPrice <= 0) {
+      setFormError("Цена покупки должна быть неотрицательной");
+      return;
+    }
+
     await addDoc(collection(db, "investments"), {
       userId: user.uid,
       name: name.trim(),
       ticker: ticker.trim().toUpperCase(),
       type,
       broker: broker.trim(),
-      quantity: Number(quantity),
-      purchasePrice: Number(purchasePrice),
-      currentPrice: Number(purchasePrice),
+      quantity: numQuantity,
+      purchasePrice: numPrice,
+      currentPrice: numPrice,
       lastUpdated: null,
       createdAt: new Date().toISOString().slice(0, 10),
     });
@@ -153,164 +189,200 @@ export default function Investments() {
         </button>
       </div>
 
-      <div className="stat-cards" style={{ marginTop: 20 }}>
-        <div className="stat-card">
-          <span className="stat-label">Стоимость портфеля</span>
-          <span className="stat-value">
-            {totalValue.toLocaleString("ru-RU")} ₽
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Вложено</span>
-          <span className="stat-value">
-            {totalCost.toLocaleString("ru-RU")} ₽
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Доходность</span>
-          <span
-            className={`stat-value ${totalPnl >= 0 ? "positive" : "negative"}`}
-          >
-            {totalPnl >= 0 ? "+" : ""}
-            {totalPnl.toLocaleString("ru-RU")} ₽ ({totalPnlPct >= 0 ? "+" : ""}
-            {totalPnlPct.toFixed(1)}%)
-          </span>
-        </div>
-      </div>
+      <ErrorBanner message={error} />
 
-      {showForm && (
-        <form className="transaction-form" onSubmit={handleAdd}>
-          <input
-            placeholder="Название актива"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            placeholder="Тикер"
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value)}
-          />
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            {ASSET_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <input
-            placeholder="Брокер / банк"
-            value={broker}
-            onChange={(e) => setBroker(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Количество"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Цена покупки за единицу, ₽"
-            value={purchasePrice}
-            onChange={(e) => setPurchasePrice(e.target.value)}
-          />
-          <button className="btn-primary" type="submit">
-            Добавить
-          </button>
-        </form>
-      )}
-
-      <div className="dashboard-grid">
-        <div className="card">
-          <h2>По брокерам / банкам</h2>
-          <GroupedPieChart
-            data={byBroker}
-            emptyText="Добавь активы, чтобы увидеть распределение."
-          />
-        </div>
-        <div className="card">
-          <h2>По типам активов</h2>
-          <GroupedPieChart
-            data={byType}
-            emptyText="Добавь активы, чтобы увидеть распределение."
-          />
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>Риск-профиль портфеля</h2>
-        {riskScore === null ? (
-          <p className="empty-state">
-            Добавь активы, чтобы рассчитать риск-профиль.
-          </p>
-        ) : (
-          <RiskMeter score={riskScore} label={riskLabel(riskScore)} />
-        )}
-      </div>
-
-      <div className="card">
-        <h2>Доходность по активам</h2>
-        <AssetPnLChart data={pnlChartData} />
-      </div>
-
-      <h2 style={{ marginTop: 8 }}>Все активы</h2>
-      <ul className="asset-list">
-        {enriched.map((a) => (
-          <li key={a.id} className="asset-item">
-            <div className="asset-item-head">
-              <div>
-                <span className="asset-name">{a.name}</span>
-                {a.ticker && <span className="asset-ticker">{a.ticker}</span>}
-              </div>
-              <button
-                className="btn-link danger"
-                onClick={() => handleDelete(a.id)}
+      {loading ? (
+        <p className="empty-state">Загрузка портфеля...</p>
+      ) : (
+        <>
+          <div className="stat-cards" style={{ marginTop: 20 }}>
+            <div className="stat-card">
+              <span className="stat-label">Стоимость портфеля</span>
+              <span className="stat-value">
+                {totalValue.toLocaleString("ru-RU")} ₽
+              </span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Вложено</span>
+              <span className="stat-value">
+                {totalCost.toLocaleString("ru-RU")} ₽
+              </span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Доходность</span>
+              <span
+                className={`stat-value ${totalPnl >= 0 ? "positive" : "negative"}`}
               >
-                Удалить
+                {totalPnl >= 0 ? "+" : ""}
+                {totalPnl.toLocaleString("ru-RU")} ₽ (
+                {totalPnlPct >= 0 ? "+" : ""}
+                {totalPnlPct.toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+
+          {showForm && (
+            <form className="transaction-form" onSubmit={handleAdd} noValidate>
+              <input
+                placeholder="Название актива (например «Сбербанк»)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <input
+                placeholder="Тикер (например SBER, BTC) — нужен для автообновления цены"
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value)}
+              />
+              <select value={type} onChange={(e) => setType(e.target.value)}>
+                {ASSET_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <input
+                placeholder="Брокер / банк (например «Т-Инвестиции»)"
+                value={broker}
+                onChange={(e) => setBroker(e.target.value)}
+              />
+              <input
+                type="number"
+                min="0.000001"
+                step="any"
+                placeholder="Количество"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+              />
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Цена покупки за единицу, ₽"
+                value={purchasePrice}
+                onChange={(e) => setPurchasePrice(e.target.value)}
+              />
+              {formError && <p className="auth-error">{formError}</p>}
+              <button className="btn-primary" type="submit">
+                Добавить
+              </button>
+            </form>
+          )}
+
+          <div className="dashboard-grid">
+            <div className="card">
+              <h2>По брокерам / банкам</h2>
+              <GroupedPieChart
+                data={byBroker}
+                emptyText="Добавь активы, чтобы увидеть распределение."
+              />
+            </div>
+            <div className="card">
+              <h2>По типам активов</h2>
+              <GroupedPieChart
+                data={byType}
+                emptyText="Добавь активы, чтобы увидеть распределение."
+              />
+            </div>
+          </div>
+
+          <div className="card">
+            <h2>Риск-профиль портфеля</h2>
+            {riskScore === null ? (
+              <p className="empty-state">
+                Добавь активы, чтобы рассчитать риск-профиль.
+              </p>
+            ) : (
+              <RiskMeter score={riskScore} label={riskLabel(riskScore)} />
+            )}
+          </div>
+
+          <div className="card">
+            <h2>Доходность по активам</h2>
+            <AssetPnLChart data={pnlChartData} />
+          </div>
+
+          <h2 style={{ marginTop: 8 }}>Все активы</h2>
+          <ul className="asset-list">
+            {enriched.map((a) => (
+              <li key={a.id} className="asset-item">
+                <div className="asset-item-head">
+                  <div>
+                    <span className="asset-name">{a.name}</span>
+                    {a.ticker && (
+                      <span className="asset-ticker">{a.ticker}</span>
+                    )}
+                  </div>
+                  <button
+                    className="btn-link danger"
+                    onClick={() => handleDelete(a.id)}
+                  >
+                    Удалить
+                  </button>
+                </div>
+                <div className="asset-item-meta muted">
+                  {a.type} · {a.broker} · {a.quantity} шт.
+                </div>
+                <div className="asset-item-prices">
+                  <span>
+                    Покупка: {a.purchasePrice.toLocaleString("ru-RU")} ₽
+                  </span>
+                  <span>
+                    Текущая:{" "}
+                    <input
+                      type="number"
+                      className="price-inline-input"
+                      defaultValue={a.currentPrice}
+                      onBlur={(e) => handleManualPrice(a, e.target.value)}
+                    />{" "}
+                    ₽
+                  </span>
+                  {LIVE_PRICE_TYPES.includes(a.type) && (
+                    <button
+                      className="btn-link"
+                      disabled={updatingId === a.id}
+                      onClick={() => handleRefreshPrice(a)}
+                    >
+                      {updatingId === a.id ? "Обновляю…" : "↻ Обновить курс"}
+                    </button>
+                  )}
+                </div>
+                {a.lastUpdated && (
+                  <p className="muted asset-updated">
+                    Обновлено:{" "}
+                    {new Date(a.lastUpdated).toLocaleString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                )}
+                {priceErrors[a.id] && (
+                  <p className="auth-error">{priceErrors[a.id]}</p>
+                )}
+                <div className="asset-item-result">
+                  <span>Стоимость: {a.value.toLocaleString("ru-RU")} ₽</span>
+                  <span className={a.pnl >= 0 ? "positive" : "negative"}>
+                    {a.pnl >= 0 ? "+" : ""}
+                    {a.pnl.toLocaleString("ru-RU")} ₽ (
+                    {a.pnlPct >= 0 ? "+" : ""}
+                    {a.pnlPct.toFixed(1)}%)
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {enriched.length === 0 && (
+            <div className="empty-state-action">
+              <p className="empty-state">Портфель пуст.</p>
+              <button className="btn-primary" onClick={() => setShowForm(true)}>
+                + Добавить первый актив
               </button>
             </div>
-            <div className="asset-item-meta muted">
-              {a.type} · {a.broker} · {a.quantity} шт.
-            </div>
-            <div className="asset-item-prices">
-              <span>Покупка: {a.purchasePrice.toLocaleString("ru-RU")} ₽</span>
-              <span>
-                Текущая:{" "}
-                <input
-                  type="number"
-                  className="price-inline-input"
-                  defaultValue={a.currentPrice}
-                  onBlur={(e) => handleManualPrice(a, e.target.value)}
-                />{" "}
-                ₽
-              </span>
-              {LIVE_PRICE_TYPES.includes(a.type) && (
-                <button
-                  className="btn-link"
-                  disabled={updatingId === a.id}
-                  onClick={() => handleRefreshPrice(a)}
-                >
-                  {updatingId === a.id ? "Обновляю…" : "↻ Обновить курс"}
-                </button>
-              )}
-            </div>
-            {priceErrors[a.id] && (
-              <p className="auth-error">{priceErrors[a.id]}</p>
-            )}
-            <div className="asset-item-result">
-              <span>Стоимость: {a.value.toLocaleString("ru-RU")} ₽</span>
-              <span className={a.pnl >= 0 ? "positive" : "negative"}>
-                {a.pnl >= 0 ? "+" : ""}
-                {a.pnl.toLocaleString("ru-RU")} ₽ ({a.pnlPct >= 0 ? "+" : ""}
-                {a.pnlPct.toFixed(1)}%)
-              </span>
-            </div>
-          </li>
-        ))}
-        {enriched.length === 0 && (
-          <p className="empty-state">Портфель пуст — добавьте первый актив.</p>
-        )}
-      </ul>
+          )}
+        </>
+      )}
     </div>
   );
 }

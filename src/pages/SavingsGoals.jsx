@@ -12,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import CircularProgress from "../components/CircularProgress";
+import ErrorBanner from "../components/ErrorBanner";
 
 export default function SavingsGoals() {
   const { user } = useAuth();
@@ -20,26 +21,43 @@ export default function SavingsGoals() {
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
+    setError(null);
     const qGoals = query(
       collection(db, "goals"),
       where("userId", "==", user.uid),
     );
-    const unsubGoals = onSnapshot(qGoals, (snap) =>
-      setGoals(
-        snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((g) => (g.kind || "saving") === "saving"),
-      ),
+    const unsubGoals = onSnapshot(
+      qGoals,
+      (snap) => {
+        setGoals(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((g) => (g.kind || "saving") === "saving"),
+        );
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Ошибка загрузки копилок:", err);
+        setError(
+          "Не удалось загрузить копилки. Проверь соединение с интернетом.",
+        );
+        setLoading(false);
+      },
     );
     const qDep = query(
       collection(db, "goalDeposits"),
       where("userId", "==", user.uid),
     );
-    const unsubDep = onSnapshot(qDep, (snap) =>
-      setDeposits(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    const unsubDep = onSnapshot(
+      qDep,
+      (snap) => setDeposits(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.error("Ошибка загрузки пополнений:", err),
     );
     return () => {
       unsubGoals();
@@ -49,12 +67,23 @@ export default function SavingsGoals() {
 
   async function handleAdd(e) {
     e.preventDefault();
-    if (!name.trim() || !target) return;
+    setFormError("");
+
+    if (!name.trim()) {
+      setFormError("Укажи название копилки");
+      return;
+    }
+    const numTarget = Number(target);
+    if (!target || Number.isNaN(numTarget) || numTarget <= 0) {
+      setFormError("Целевая сумма должна быть больше нуля");
+      return;
+    }
+
     await addDoc(collection(db, "goals"), {
       userId: user.uid,
       name: name.trim(),
       kind: "saving",
-      targetAmount: Number(target),
+      targetAmount: numTarget,
       createdAt: new Date().toISOString().slice(0, 10),
     });
     setName("");
@@ -113,33 +142,45 @@ export default function SavingsGoals() {
         </button>
       </div>
 
-      {showForm && (
-        <form className="transaction-form" onSubmit={handleAdd}>
-          <input
-            placeholder="Название (например «Подушка безопасности»)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Целевая сумма, ₽"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-          />
-          <button className="btn-primary" type="submit">
-            Создать
-          </button>
-        </form>
-      )}
+      <ErrorBanner message={error} />
 
-      <div className="goal-grid">
-        {goals.map(renderGoal)}
-        {goals.length === 0 && (
-          <p className="empty-state">
-            Пока нет ни одной копилки — начни копить!
-          </p>
-        )}
-      </div>
+      {loading ? (
+        <p className="empty-state">Загрузка копилок...</p>
+      ) : (
+        <>
+          {showForm && (
+            <form className="transaction-form" onSubmit={handleAdd} noValidate>
+              <input
+                placeholder="Название (например «Подушка безопасности»)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Целевая сумма, ₽"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+              />
+              {formError && <p className="auth-error">{formError}</p>}
+              <button className="btn-primary" type="submit">
+                Создать
+              </button>
+            </form>
+          )}
+
+          <div className="goal-grid">{goals.map(renderGoal)}</div>
+          {goals.length === 0 && (
+            <div className="empty-state-action">
+              <p className="empty-state">Пока нет ни одной копилки.</p>
+              <button className="btn-primary" onClick={() => setShowForm(true)}>
+                + Создать первую копилку
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

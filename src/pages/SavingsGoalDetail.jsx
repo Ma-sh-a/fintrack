@@ -22,6 +22,7 @@ export default function SavingsGoalDetail() {
   const [deposits, setDeposits] = useState([]);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [depositError, setDepositError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -51,11 +52,18 @@ export default function SavingsGoalDetail() {
 
   async function handleAddDeposit(e) {
     e.preventDefault();
-    if (!amount) return;
+    setDepositError("");
+    const numAmount = Number(amount);
+    if (!amount || Number.isNaN(numAmount) || numAmount <= 0) {
+      setDepositError(
+        "Вы можете пополнить копилку только положительной суммой",
+      );
+      return;
+    }
     await addDoc(collection(db, "goalDeposits"), {
       userId: user.uid,
       goalId: id,
-      amount: Number(amount),
+      amount: numAmount,
       note: note.trim(),
       date: new Date().toISOString().slice(0, 10),
     });
@@ -89,6 +97,7 @@ export default function SavingsGoalDetail() {
   return (
     <div className="page">
       <button className="btn-link" onClick={() => navigate("/savings")}>
+        {" "}
         ← Назад к копилкам
       </button>
       <h1>{goal.name}</h1>
@@ -112,9 +121,11 @@ export default function SavingsGoalDetail() {
         </div>
       </div>
 
-      <form className="inline-form" onSubmit={handleAddDeposit}>
+      <form className="inline-form" onSubmit={handleAddDeposit} noValidate>
         <input
           type="number"
+          min="0.01"
+          step="0.01"
           placeholder="Сумма пополнения, ₽"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -128,6 +139,7 @@ export default function SavingsGoalDetail() {
           Пополнить
         </button>
       </form>
+      {depositError && <p className="auth-error">{depositError}</p>}
 
       <h2>История пополнений</h2>
       <ul className="transaction-list">
@@ -149,7 +161,7 @@ export default function SavingsGoalDetail() {
           </li>
         ))}
         {deposits.length === 0 && (
-          <p className="empty-state">Пополнений пока не было.</p>
+          <p className="empty-state">Пополнений пока что не было.</p>
         )}
       </ul>
 
