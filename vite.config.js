@@ -3,9 +3,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/fintrack/',
+  base: '/',
   test: {
     environment: 'node',
     globals: false,
   },
-})
