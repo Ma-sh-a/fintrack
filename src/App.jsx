@@ -1,18 +1,18 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Navbar from "./components/Navbar";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Transactions from "./pages/Transactions";
-import TransactionDetail from "./pages/TransactionDetail";
-import Categories from "./pages/Categories";
-import Profile from "./pages/Profile";
-import SavingsGoals from "./pages/SavingsGoals";
-import SavingsGoalDetail from "./pages/SavingsGoalDetail";
-import Investments from "./pages/Investments";
-import Connections from "./pages/Connections";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Navbar from './components/Navbar'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Dashboard from './pages/Dashboard'
+import Transactions from './pages/Transactions'
+import TransactionDetail from './pages/TransactionDetail'
+import Categories from './pages/Categories'
+import Profile from './pages/Profile'
+import SavingsGoals from './pages/SavingsGoals'
+import SavingsGoalDetail from './pages/SavingsGoalDetail'
+import Investments from './pages/Investments'
+import Connections from './pages/Connections'
 
 export default function App() {
   return (
@@ -98,5 +98,5 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
-  );
+  )
 }

@@ -1,12 +1,12 @@
-import { useRef, useState } from "react";
-import { buildAnswer } from "../utils/chatLogic";
+import { useRef, useState } from 'react'
+import { buildAnswer } from '../utils/chatLogic'
 
 const SUGGESTIONS = [
-  "Баланс за месяц",
-  "Сравни с прошлым месяцем",
-  "Есть превышения лимита?",
-  "Сколько в копилках?",
-];
+  'Баланс за месяц',
+  'Сравни с прошлым месяцем',
+  'Есть превышения лимита?',
+  'Сколько в копилках?',
+]
 
 export default function ChatAssistant({
   transactions,
@@ -17,15 +17,15 @@ export default function ChatAssistant({
   investments = [],
   selectedMonth,
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
     {
-      from: "bot",
-      text: "Привет! Спроси меня про баланс, расходы, лимиты, копилки или инвестиции.",
+      from: 'bot',
+      text: 'Привет! Спроси меня про баланс, расходы, лимиты, копилки или инвестиции.',
     },
-  ]);
-  const [input, setInput] = useState("");
-  const listRef = useRef(null);
+  ])
+  const [input, setInput] = useState('')
+  const listRef = useRef(null)
 
   const ctx = {
     transactions,
@@ -35,30 +35,23 @@ export default function ChatAssistant({
     deposits,
     investments,
     selectedMonth,
-  };
+  }
 
   function ask(question) {
-    const answer = buildAnswer(question, ctx);
-    setMessages((m) => [
-      ...m,
-      { from: "user", text: question },
-      { from: "bot", text: answer },
-    ]);
-    setTimeout(
-      () => listRef.current?.scrollTo(0, listRef.current.scrollHeight),
-      0,
-    );
+    const answer = buildAnswer(question, ctx)
+    setMessages((m) => [...m, { from: 'user', text: question }, { from: 'bot', text: answer }])
+    setTimeout(() => listRef.current?.scrollTo(0, listRef.current.scrollHeight), 0)
   }
 
   function handleSend(e) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    ask(input.trim());
-    setInput("");
+    e.preventDefault()
+    if (!input.trim()) return
+    ask(input.trim())
+    setInput('')
   }
 
   return (
-    <div className={`chat-widget ${open ? "open" : ""}`}>
+    <div className={`chat-widget ${open ? 'open' : ''}`}>
       {open ? (
         <div className="chat-panel">
           <div className="chat-header">
@@ -100,5 +93,5 @@ export default function ChatAssistant({
         </button>
       )}
     </div>
-  );
+  )
 }

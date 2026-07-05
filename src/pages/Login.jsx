@@ -1,32 +1,32 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { login, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const { login, loginWithGoogle } = useAuth()
+  const navigate = useNavigate()
 
   async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError('')
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      await login(email, password)
+      navigate('/dashboard')
     } catch (err) {
-      setError("Не удалось войти: проверь email и пароль");
+      setError('Не удалось войти: проверь email и пароль')
     }
   }
 
   async function handleGoogle() {
-    setError("");
+    setError('')
     try {
-      await loginWithGoogle();
-      navigate("/dashboard");
+      await loginWithGoogle()
+      navigate('/dashboard')
     } catch (err) {
-      setError("Не удалось войти через Google");
+      setError('Не удалось войти через Google')
     }
   }
 
@@ -60,5 +60,5 @@ export default function Login() {
         </p>
       </form>
     </div>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user } = useAuth()
 
   return (
     <div className="page">
@@ -24,5 +24,5 @@ export default function Profile() {
         <p className="muted">Аккаунт заранее наполнен тестовыми данными.</p>
       </div>
     </div>
-  );
+  )
 }

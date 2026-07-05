@@ -1,112 +1,91 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { db } from "../firebase";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import CircularProgress from "../components/CircularProgress";
-import ErrorBanner from "../components/ErrorBanner";
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { db } from '../firebase'
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore'
+import CircularProgress from '../components/CircularProgress'
+import ErrorBanner from '../components/ErrorBanner'
 
 export default function SavingsGoals() {
-  const { user } = useAuth();
-  const [goals, setGoals] = useState([]);
-  const [deposits, setDeposits] = useState([]);
-  const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user } = useAuth()
+  const [goals, setGoals] = useState([])
+  const [deposits, setDeposits] = useState([])
+  const [name, setName] = useState('')
+  const [target, setTarget] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!user) return;
-    setError(null);
-    const qGoals = query(
-      collection(db, "goals"),
-      where("userId", "==", user.uid),
-    );
+    if (!user) return
+    setError(null)
+    const qGoals = query(collection(db, 'goals'), where('userId', '==', user.uid))
     const unsubGoals = onSnapshot(
       qGoals,
       (snap) => {
         setGoals(
-          snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((g) => (g.kind || "saving") === "saving"),
-        );
-        setLoading(false);
+          snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((g) => (g.kind || 'saving') === 'saving')
+        )
+        setLoading(false)
       },
       (err) => {
-        console.error("Ошибка загрузки копилок:", err);
-        setError(
-          "Не удалось загрузить копилки. Проверь соединение с интернетом.",
-        );
-        setLoading(false);
-      },
-    );
-    const qDep = query(
-      collection(db, "goalDeposits"),
-      where("userId", "==", user.uid),
-    );
+        console.error('Ошибка загрузки копилок:', err)
+        setError('Не удалось загрузить копилки. Проверь соединение с интернетом.')
+        setLoading(false)
+      }
+    )
+    const qDep = query(collection(db, 'goalDeposits'), where('userId', '==', user.uid))
     const unsubDep = onSnapshot(
       qDep,
       (snap) => setDeposits(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      (err) => console.error("Ошибка загрузки пополнений:", err),
-    );
+      (err) => console.error('Ошибка загрузки пополнений:', err)
+    )
     return () => {
-      unsubGoals();
-      unsubDep();
-    };
-  }, [user]);
+      unsubGoals()
+      unsubDep()
+    }
+  }, [user])
 
   async function handleAdd(e) {
-    e.preventDefault();
-    setFormError("");
+    e.preventDefault()
+    setFormError('')
 
     if (!name.trim()) {
-      setFormError("Укажи название копилки");
-      return;
+      setFormError('Укажи название копилки')
+      return
     }
-    const numTarget = Number(target);
+    const numTarget = Number(target)
     if (!target || Number.isNaN(numTarget) || numTarget <= 0) {
-      setFormError("Целевая сумма должна быть больше нуля");
-      return;
+      setFormError('Целевая сумма должна быть больше нуля')
+      return
     }
 
-    await addDoc(collection(db, "goals"), {
+    await addDoc(collection(db, 'goals'), {
       userId: user.uid,
       name: name.trim(),
-      kind: "saving",
+      kind: 'saving',
       targetAmount: numTarget,
       createdAt: new Date().toISOString().slice(0, 10),
-    });
-    setName("");
-    setTarget("");
-    setShowForm(false);
+    })
+    setName('')
+    setTarget('')
+    setShowForm(false)
   }
 
   async function handleDelete(id, e) {
-    e.preventDefault();
-    e.stopPropagation();
-    await deleteDoc(doc(db, "goals", id));
+    e.preventDefault()
+    e.stopPropagation()
+    await deleteDoc(doc(db, 'goals', id))
   }
 
   function savedFor(goalId) {
-    return deposits
-      .filter((d) => d.goalId === goalId)
-      .reduce((s, d) => s + Number(d.amount), 0);
+    return deposits.filter((d) => d.goalId === goalId).reduce((s, d) => s + Number(d.amount), 0)
   }
 
   function renderGoal(g) {
-    const saved = savedFor(g.id);
-    const pct =
-      g.targetAmount > 0 ? Math.round((saved / g.targetAmount) * 100) : 0;
+    const saved = savedFor(g.id)
+    const pct = g.targetAmount > 0 ? Math.round((saved / g.targetAmount) * 100) : 0
     return (
       <Link to={`/savings/${g.id}`} key={g.id} className="goal-card">
         <div className="goal-badge goal-badge-saving">● Копилка</div>
@@ -115,22 +94,16 @@ export default function SavingsGoals() {
           <div className="goal-card-info">
             <span className="goal-card-name">{g.name}</span>
             <span className="goal-card-amounts">
-              {saved.toLocaleString("ru-RU")} ₽
-              <span className="muted">
-                {" "}
-                из {g.targetAmount.toLocaleString("ru-RU")} ₽
-              </span>
+              {saved.toLocaleString('ru-RU')} ₽
+              <span className="muted"> из {g.targetAmount.toLocaleString('ru-RU')} ₽</span>
             </span>
           </div>
         </div>
-        <button
-          className="btn-link danger goal-delete"
-          onClick={(e) => handleDelete(g.id, e)}
-        >
+        <button className="btn-link danger goal-delete" onClick={(e) => handleDelete(g.id, e)}>
           Удалить
         </button>
       </Link>
-    );
+    )
   }
 
   return (
@@ -138,7 +111,7 @@ export default function SavingsGoals() {
       <div className="page-header">
         <h1 style={{ marginBottom: 0 }}>Копилки</h1>
         <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? "Закрыть" : "+ Новая копилка"}
+          {showForm ? 'Закрыть' : '+ Новая копилка'}
         </button>
       </div>
 
@@ -182,5 +155,5 @@ export default function SavingsGoals() {
         </>
       )}
     </div>
-  );
+  )
 }

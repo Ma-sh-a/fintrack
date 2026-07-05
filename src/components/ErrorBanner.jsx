@@ -1,5 +1,5 @@
 export default function ErrorBanner({ message, onRetry }) {
-  if (!message) return null;
+  if (!message) return null
   return (
     <div className="error-banner">
       <span>⚠ {message}</span>
@@ -9,5 +9,5 @@ export default function ErrorBanner({ message, onRetry }) {
         </button>
       )}
     </div>
-  );
+  )
 }

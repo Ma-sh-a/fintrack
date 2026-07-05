@@ -1,103 +1,74 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { db } from "../firebase";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import GroupedPieChart from "../components/GroupedPieChart";
-import AssetPnLChart from "../components/AssetPnLChart";
-import RiskMeter from "../components/RiskMeter";
-import ErrorBanner from "../components/ErrorBanner";
-import {
-  fetchMarketPrice,
-  LIVE_PRICE_TYPES,
-  riskLabel,
-} from "../utils/marketData";
-import {
-  enrichAsset,
-  portfolioTotals,
-  calcRiskScore,
-  groupSum,
-} from "../utils/investmentCalc";
+import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { db } from '../firebase'
+import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, query, where } from 'firebase/firestore'
+import GroupedPieChart from '../components/GroupedPieChart'
+import AssetPnLChart from '../components/AssetPnLChart'
+import RiskMeter from '../components/RiskMeter'
+import ErrorBanner from '../components/ErrorBanner'
+import { fetchMarketPrice, LIVE_PRICE_TYPES, riskLabel } from '../utils/marketData'
+import { enrichAsset, portfolioTotals, calcRiskScore, groupSum } from '../utils/investmentCalc'
 
-const ASSET_TYPES = [
-  "Акции",
-  "Облигации",
-  "ETF/Фонды",
-  "Криптовалюта",
-  "Другое",
-];
+const ASSET_TYPES = ['Акции', 'Облигации', 'ETF/Фонды', 'Криптовалюта', 'Другое']
 
 export default function Investments() {
-  const { user } = useAuth();
-  const [assets, setAssets] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [ticker, setTicker] = useState("");
-  const [type, setType] = useState(ASSET_TYPES[0]);
-  const [broker, setBroker] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [purchasePrice, setPurchasePrice] = useState("");
-  const [updatingId, setUpdatingId] = useState(null);
-  const [priceErrors, setPriceErrors] = useState({});
-  const [formError, setFormError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user } = useAuth()
+  const [assets, setAssets] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName] = useState('')
+  const [ticker, setTicker] = useState('')
+  const [type, setType] = useState(ASSET_TYPES[0])
+  const [broker, setBroker] = useState('')
+  const [quantity, setQuantity] = useState('')
+  const [purchasePrice, setPurchasePrice] = useState('')
+  const [updatingId, setUpdatingId] = useState(null)
+  const [priceErrors, setPriceErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!user) return;
-    setError(null);
-    const q = query(
-      collection(db, "investments"),
-      where("userId", "==", user.uid),
-    );
+    if (!user) return
+    setError(null)
+    const q = query(collection(db, 'investments'), where('userId', '==', user.uid))
     return onSnapshot(
       q,
       (snap) => {
-        setAssets(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setLoading(false);
+        setAssets(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+        setLoading(false)
       },
       (err) => {
-        console.error("Ошибка загрузки инвестиций:", err);
-        setError(
-          "Не удалось загрузить портфель. Проверь соединение с интернетом.",
-        );
-        setLoading(false);
-      },
-    );
-  }, [user]);
+        console.error('Ошибка загрузки инвестиций:', err)
+        setError('Не удалось загрузить портфель. Проверь соединение с интернетом.')
+        setLoading(false)
+      }
+    )
+  }, [user])
 
   async function handleAdd(e) {
-    e.preventDefault();
-    setFormError("");
+    e.preventDefault()
+    setFormError('')
 
     if (!name.trim()) {
-      setFormError("Укажи название актива");
-      return;
+      setFormError('Укажи название актива')
+      return
     }
     if (!broker.trim()) {
-      setFormError("Укажи брокера или банк");
-      return;
+      setFormError('Укажи брокера или банк')
+      return
     }
-    const numQuantity = Number(quantity);
+    const numQuantity = Number(quantity)
     if (!quantity || Number.isNaN(numQuantity) || numQuantity <= 0) {
-      setFormError("Количество должно быть положительным числом");
-      return;
+      setFormError('Количество должно быть положительным числом')
+      return
     }
-    const numPrice = Number(purchasePrice);
+    const numPrice = Number(purchasePrice)
     if (!purchasePrice || Number.isNaN(numPrice) || numPrice <= 0) {
-      setFormError("Цена покупки должна быть неотрицательной");
-      return;
+      setFormError('Цена покупки должна быть неотрицательной')
+      return
     }
 
-    await addDoc(collection(db, "investments"), {
+    await addDoc(collection(db, 'investments'), {
       userId: user.uid,
       name: name.trim(),
       ticker: ticker.trim().toUpperCase(),
@@ -108,84 +79,81 @@ export default function Investments() {
       currentPrice: numPrice,
       lastUpdated: null,
       createdAt: new Date().toISOString().slice(0, 10),
-    });
-    setName("");
-    setTicker("");
-    setBroker("");
-    setQuantity("");
-    setPurchasePrice("");
-    setShowForm(false);
+    })
+    setName('')
+    setTicker('')
+    setBroker('')
+    setQuantity('')
+    setPurchasePrice('')
+    setShowForm(false)
   }
 
   async function handleDelete(id) {
-    await deleteDoc(doc(db, "investments", id));
+    await deleteDoc(doc(db, 'investments', id))
   }
 
   async function handleRefreshPrice(asset) {
-    setUpdatingId(asset.id);
-    setPriceErrors((e) => ({ ...e, [asset.id]: null }));
+    setUpdatingId(asset.id)
+    setPriceErrors((e) => ({ ...e, [asset.id]: null }))
     try {
-      const price = await fetchMarketPrice(asset.ticker, asset.type);
-      await updateDoc(doc(db, "investments", asset.id), {
+      const price = await fetchMarketPrice(asset.ticker, asset.type)
+      await updateDoc(doc(db, 'investments', asset.id), {
         currentPrice: price,
         lastUpdated: new Date().toISOString(),
-      });
+      })
     } catch (err) {
-      setPriceErrors((e) => ({ ...e, [asset.id]: err.message }));
+      setPriceErrors((e) => ({ ...e, [asset.id]: err.message }))
     } finally {
-      setUpdatingId(null);
+      setUpdatingId(null)
     }
   }
 
   async function handleManualPrice(asset, value) {
-    if (!value) return;
-    await updateDoc(doc(db, "investments", asset.id), {
+    if (!value) return
+    await updateDoc(doc(db, 'investments', asset.id), {
       currentPrice: Number(value),
       lastUpdated: new Date().toISOString(),
-    });
+    })
   }
 
-  const enriched = useMemo(() => assets.map(enrichAsset), [assets]);
+  const enriched = useMemo(() => assets.map(enrichAsset), [assets])
 
   const { totalValue, totalCost, totalPnl, totalPnlPct } = useMemo(
     () => portfolioTotals(enriched),
-    [enriched],
-  );
+    [enriched]
+  )
 
   const byBroker = useMemo(
     () =>
       groupSum(
         enriched,
         (a) => a.broker,
-        (a) => a.value,
+        (a) => a.value
       ),
-    [enriched],
-  );
+    [enriched]
+  )
   const byType = useMemo(
     () =>
       groupSum(
         enriched,
         (a) => a.type,
-        (a) => a.value,
+        (a) => a.value
       ),
-    [enriched],
-  );
+    [enriched]
+  )
   const pnlChartData = useMemo(
-    () =>
-      enriched
-        .filter((a) => a.cost > 0)
-        .map((a) => ({ name: a.name, pnlPct: a.pnlPct })),
-    [enriched],
-  );
+    () => enriched.filter((a) => a.cost > 0).map((a) => ({ name: a.name, pnlPct: a.pnlPct })),
+    [enriched]
+  )
 
-  const riskScore = useMemo(() => calcRiskScore(enriched), [enriched]);
+  const riskScore = useMemo(() => calcRiskScore(enriched), [enriched])
 
   return (
     <div className="page">
       <div className="page-header">
         <h1 style={{ marginBottom: 0 }}>Инвестиции</h1>
         <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? "Закрыть" : "+ Добавить актив"}
+          {showForm ? 'Закрыть' : '+ Добавить актив'}
         </button>
       </div>
 
@@ -198,24 +166,17 @@ export default function Investments() {
           <div className="stat-cards" style={{ marginTop: 20 }}>
             <div className="stat-card">
               <span className="stat-label">Стоимость портфеля</span>
-              <span className="stat-value">
-                {totalValue.toLocaleString("ru-RU")} ₽
-              </span>
+              <span className="stat-value">{totalValue.toLocaleString('ru-RU')} ₽</span>
             </div>
             <div className="stat-card">
               <span className="stat-label">Вложено</span>
-              <span className="stat-value">
-                {totalCost.toLocaleString("ru-RU")} ₽
-              </span>
+              <span className="stat-value">{totalCost.toLocaleString('ru-RU')} ₽</span>
             </div>
             <div className="stat-card">
               <span className="stat-label">Доходность</span>
-              <span
-                className={`stat-value ${totalPnl >= 0 ? "positive" : "negative"}`}
-              >
-                {totalPnl >= 0 ? "+" : ""}
-                {totalPnl.toLocaleString("ru-RU")} ₽ (
-                {totalPnlPct >= 0 ? "+" : ""}
+              <span className={`stat-value ${totalPnl >= 0 ? 'positive' : 'negative'}`}>
+                {totalPnl >= 0 ? '+' : ''}
+                {totalPnl.toLocaleString('ru-RU')} ₽ ({totalPnlPct >= 0 ? '+' : ''}
                 {totalPnlPct.toFixed(1)}%)
               </span>
             </div>
@@ -271,26 +232,18 @@ export default function Investments() {
           <div className="dashboard-grid">
             <div className="card">
               <h2>По брокерам / банкам</h2>
-              <GroupedPieChart
-                data={byBroker}
-                emptyText="Добавь активы, чтобы увидеть распределение."
-              />
+              <GroupedPieChart data={byBroker} emptyText="Добавь активы, чтобы увидеть распределение." />
             </div>
             <div className="card">
               <h2>По типам активов</h2>
-              <GroupedPieChart
-                data={byType}
-                emptyText="Добавь активы, чтобы увидеть распределение."
-              />
+              <GroupedPieChart data={byType} emptyText="Добавь активы, чтобы увидеть распределение." />
             </div>
           </div>
 
           <div className="card">
             <h2>Риск-профиль портфеля</h2>
             {riskScore === null ? (
-              <p className="empty-state">
-                Добавь активы, чтобы рассчитать риск-профиль.
-              </p>
+              <p className="empty-state">Добавь активы, чтобы рассчитать риск-профиль.</p>
             ) : (
               <RiskMeter score={riskScore} label={riskLabel(riskScore)} />
             )}
@@ -308,14 +261,9 @@ export default function Investments() {
                 <div className="asset-item-head">
                   <div>
                     <span className="asset-name">{a.name}</span>
-                    {a.ticker && (
-                      <span className="asset-ticker">{a.ticker}</span>
-                    )}
+                    {a.ticker && <span className="asset-ticker">{a.ticker}</span>}
                   </div>
-                  <button
-                    className="btn-link danger"
-                    onClick={() => handleDelete(a.id)}
-                  >
+                  <button className="btn-link danger" onClick={() => handleDelete(a.id)}>
                     Удалить
                   </button>
                 </div>
@@ -323,17 +271,15 @@ export default function Investments() {
                   {a.type} · {a.broker} · {a.quantity} шт.
                 </div>
                 <div className="asset-item-prices">
+                  <span>Покупка: {a.purchasePrice.toLocaleString('ru-RU')} ₽</span>
                   <span>
-                    Покупка: {a.purchasePrice.toLocaleString("ru-RU")} ₽
-                  </span>
-                  <span>
-                    Текущая:{" "}
+                    Текущая:{' '}
                     <input
                       type="number"
                       className="price-inline-input"
                       defaultValue={a.currentPrice}
                       onBlur={(e) => handleManualPrice(a, e.target.value)}
-                    />{" "}
+                    />{' '}
                     ₽
                   </span>
                   {LIVE_PRICE_TYPES.includes(a.type) && (
@@ -342,31 +288,28 @@ export default function Investments() {
                       disabled={updatingId === a.id}
                       onClick={() => handleRefreshPrice(a)}
                     >
-                      {updatingId === a.id ? "Обновляю…" : "↻ Обновить курс"}
+                      {updatingId === a.id ? 'Обновляю…' : '↻ Обновить курс'}
                     </button>
                   )}
                 </div>
                 {a.lastUpdated && (
                   <p className="muted asset-updated">
-                    Обновлено:{" "}
-                    {new Date(a.lastUpdated).toLocaleString("ru-RU", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
+                    Обновлено:{' '}
+                    {new Date(a.lastUpdated).toLocaleString('ru-RU', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </p>
                 )}
-                {priceErrors[a.id] && (
-                  <p className="auth-error">{priceErrors[a.id]}</p>
-                )}
+                {priceErrors[a.id] && <p className="auth-error">{priceErrors[a.id]}</p>}
                 <div className="asset-item-result">
-                  <span>Стоимость: {a.value.toLocaleString("ru-RU")} ₽</span>
-                  <span className={a.pnl >= 0 ? "positive" : "negative"}>
-                    {a.pnl >= 0 ? "+" : ""}
-                    {a.pnl.toLocaleString("ru-RU")} ₽ (
-                    {a.pnlPct >= 0 ? "+" : ""}
+                  <span>Стоимость: {a.value.toLocaleString('ru-RU')} ₽</span>
+                  <span className={a.pnl >= 0 ? 'positive' : 'negative'}>
+                    {a.pnl >= 0 ? '+' : ''}
+                    {a.pnl.toLocaleString('ru-RU')} ₽ ({a.pnlPct >= 0 ? '+' : ''}
                     {a.pnlPct.toFixed(1)}%)
                   </span>
                 </div>
@@ -384,5 +327,5 @@ export default function Investments() {
         </>
       )}
     </div>
-  );
+  )
 }
