@@ -35,9 +35,13 @@ React 18, React Router, Firebase (Authentication + Firestore), Recharts, Vite, E
 ## Запуск локально
 
 npm run dev       # локальный сервер разработки
+
 npm run test      # юнит-тесты
+
 npm run lint      # проверка кода
+
 npm run format    # автоформатирование
+
 npm run build     #сборка
 
 
