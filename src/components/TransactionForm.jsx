@@ -1,24 +1,38 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-export default function TransactionForm({ categories, initial, onSubmit, onCancel }) {
-  const [type, setType] = useState(initial?.type || 'expense')
-  const [amount, setAmount] = useState(initial?.amount || '')
-  const [categoryId, setCategoryId] = useState(initial?.categoryId || '')
-  const [note, setNote] = useState(initial?.note || '')
-  const [date, setDate] = useState(initial?.date || new Date().toISOString().slice(0, 10))
+export default function TransactionForm({
+  categories,
+  initial,
+  onSubmit,
+  onCancel,
+}) {
+  const [type, setType] = useState(initial?.type || "expense");
+  const [amount, setAmount] = useState(initial?.amount || "");
+  const [categoryId, setCategoryId] = useState(initial?.categoryId || "");
+  const [note, setNote] = useState(initial?.note || "");
+  const [date, setDate] = useState(
+    initial?.date || new Date().toISOString().slice(0, 10),
+  );
 
   function handleSubmit(e) {
-    e.preventDefault()
-    if (!amount || !categoryId) return
-    onSubmit({ type, amount: Number(amount), categoryId, note: note.trim(), date })
+    e.preventDefault();
+    if (!amount || !categoryId) return;
+    onSubmit({
+      type,
+      amount: Number(amount),
+      categoryId,
+      note: note.trim(),
+      date,
+    });
   }
 
-  const availableCategories = categories.filter((c) => (c.type || 'expense') === type)
+  const availableCategories = categories.filter(
+    (c) => (c.type || "expense") === type,
+  );
 
- 
   function handleTypeChange(newType) {
-    setType(newType)
-    setCategoryId('')
+    setType(newType);
+    setCategoryId("");
   }
 
   return (
@@ -26,15 +40,15 @@ export default function TransactionForm({ categories, initial, onSubmit, onCance
       <div className="type-toggle">
         <button
           type="button"
-          className={type === 'expense' ? 'active' : ''}
-          onClick={() => handleTypeChange('expense')}
+          className={type === "expense" ? "active" : ""}
+          onClick={() => handleTypeChange("expense")}
         >
           Расход
         </button>
         <button
           type="button"
-          className={type === 'income' ? 'active' : ''}
-          onClick={() => handleTypeChange('income')}
+          className={type === "income" ? "active" : ""}
+          onClick={() => handleTypeChange("income")}
         >
           Доход
         </button>
@@ -48,19 +62,31 @@ export default function TransactionForm({ categories, initial, onSubmit, onCance
         required
       />
 
-      <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+      <select
+        value={categoryId}
+        onChange={(e) => setCategoryId(e.target.value)}
+        required
+      >
         <option value="">Выбери категорию</option>
         {availableCategories.map((c) => (
-          <option key={c.id} value={c.id}>{c.name}</option>
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
         ))}
       </select>
       {availableCategories.length === 0 && (
         <p className="empty-state">
-          Нет категорий {type === 'income' ? 'доходов' : 'расходов'} — добавь на странице «Категории».
+          Нет категорий {type === "income" ? "доходов" : "расходов"} — добавь на
+          странице «Категории».
         </p>
       )}
 
-      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        required
+      />
 
       <input
         placeholder="Комментарий (необязательно)"
@@ -69,9 +95,15 @@ export default function TransactionForm({ categories, initial, onSubmit, onCance
       />
 
       <div className="form-actions">
-        <button type="submit" className="btn-primary">Сохранить</button>
-        {onCancel && <button type="button" className="btn-secondary" onClick={onCancel}>Отмена</button>}
+        <button type="submit" className="btn-primary">
+          Сохранить
+        </button>
+        {onCancel && (
+          <button type="button" className="btn-secondary" onClick={onCancel}>
+            Отмена
+          </button>
+        )}
       </div>
     </form>
-  )
+  );
 }

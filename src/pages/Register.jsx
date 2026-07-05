@@ -1,26 +1,26 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const { register } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
     if (password.length < 6) {
-      setError('Пароль должен быть не короче 6 символов')
-      return
+      setError("Пароль должен быть не короче 6 символов");
+      return;
     }
     try {
-      await register(email, password)
-      navigate('/dashboard')
+      await register(email, password);
+      navigate("/dashboard");
     } catch (err) {
-      setError('Не удалось создать аккаунт (возможно, email уже занят)')
+      setError("Не удалось создать аккаунт (возможно, email уже занят)");
     }
   }
 
@@ -43,11 +43,13 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="btn-primary">Создать аккаунт</button>
+        <button type="submit" className="btn-primary">
+          Создать аккаунт
+        </button>
         <p className="auth-switch">
           Уже есть аккаунт? <Link to="/login">Войти</Link>
         </p>
       </form>
     </div>
-  )
+  );
 }
