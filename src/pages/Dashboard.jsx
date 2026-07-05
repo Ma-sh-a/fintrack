@@ -38,13 +38,11 @@ export default function Dashboard() {
       console.error(`Ошибка загрузки (${label}):`, err)
       setExtraError('Не удалось загрузить часть данных. Проверь соединение с интернетом.')
     }
-    let goalsLoaded = false
     const unsubs = [
       onSnapshot(
         query(collection(db, 'goals'), where('userId', '==', user.uid)),
         (snap) => {
           setGoals(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-          goalsLoaded = true
           setExtraLoading(false)
         },
         (err) => {
@@ -136,13 +134,9 @@ export default function Dashboard() {
       <div className="page-header">
         <h1 style={{ marginBottom: 0 }}>Дашборд</h1>
         <div className="month-switcher">
-          <button className="btn-link" onClick={() => setSelectedMonth((m) => shiftMonth(m, -1))}>
-            ←
-          </button>
+          <button className="btn-link" onClick={() => setSelectedMonth((m) => shiftMonth(m, -1))}>←</button>
           <span className="month-label">{monthLabel}</span>
-          <button className="btn-link" onClick={() => setSelectedMonth((m) => shiftMonth(m, 1))}>
-            →
-          </button>
+          <button className="btn-link" onClick={() => setSelectedMonth((m) => shiftMonth(m, 1))}>→</button>
         </div>
       </div>
 
@@ -152,80 +146,78 @@ export default function Dashboard() {
         <p className="empty-state">Загрузка дашборда...</p>
       ) : (
         <>
-          <div className="stat-cards">
-            <div className="stat-card">
-              <span className="stat-label">Доход за месяц</span>
-              <span className="stat-value positive">{income.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Расход за месяц</span>
-              <span className="stat-value negative">{expense.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Баланс</span>
-              <span className={`stat-value ${balance >= 0 ? 'positive' : 'negative'}`}>
-                {balance.toLocaleString('ru-RU')} ₽
-              </span>
-            </div>
-          </div>
+      <div className="stat-cards">
+        <div className="stat-card">
+          <span className="stat-label">Доход за месяц</span>
+          <span className="stat-value positive">{income.toLocaleString('ru-RU')} ₽</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Расход за месяц</span>
+          <span className="stat-value negative">{expense.toLocaleString('ru-RU')} ₽</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Баланс</span>
+          <span className={`stat-value ${balance >= 0 ? 'positive' : 'negative'}`}>
+            {balance.toLocaleString('ru-RU')} ₽
+          </span>
+        </div>
+      </div>
 
-          <div className="stat-cards">
-            <div className="stat-card">
-              <span className="stat-label">В копилках</span>
-              <span className="stat-value">{savingsTotal.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">В инвестициях</span>
-              <span className="stat-value">{investmentsTotal.toLocaleString('ru-RU')} ₽</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Всего накоплений</span>
-              <span className="stat-value positive">
-                {(savingsTotal + investmentsTotal).toLocaleString('ru-RU')} ₽
-              </span>
-            </div>
-          </div>
+      <div className="stat-cards">
+        <div className="stat-card">
+          <span className="stat-label">В копилках</span>
+          <span className="stat-value">{savingsTotal.toLocaleString('ru-RU')} ₽</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">В инвестициях</span>
+          <span className="stat-value">{investmentsTotal.toLocaleString('ru-RU')} ₽</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Всего накоплений</span>
+          <span className="stat-value positive">{(savingsTotal + investmentsTotal).toLocaleString('ru-RU')} ₽</span>
+        </div>
+      </div>
 
-          <div className="card">
-            <h2>Превышения лимитов в этом месяце</h2>
-            {overLimitCats.length === 0 ? (
-              <p className="empty-state">Лимиты не превышены ни по одной категории.</p>
-            ) : (
-              <ul className="overlimit-list">
-                {overLimitCats.map((c) => (
-                  <li key={c.id} className="overlimit-item">
-                    <span className="category-dot" style={{ background: c.color }} />
-                    <span className="overlimit-name">{c.name}</span>
-                    <span className="overlimit-amounts muted">
-                      {c.spent.toLocaleString('ru-RU')} / {c.monthlyLimit.toLocaleString('ru-RU')} ₽
-                    </span>
-                    <span className="overlimit-pct">+{c.overPct}%</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+      <div className="card">
+        <h2>Превышения лимитов в этом месяце</h2>
+        {overLimitCats.length === 0 ? (
+          <p className="empty-state">Лимиты не превышены ни по одной категории.</p>
+        ) : (
+          <ul className="overlimit-list">
+            {overLimitCats.map((c) => (
+              <li key={c.id} className="overlimit-item">
+                <span className="category-dot" style={{ background: c.color }} />
+                <span className="overlimit-name">{c.name}</span>
+                <span className="overlimit-amounts muted">
+                  {c.spent.toLocaleString('ru-RU')} / {c.monthlyLimit.toLocaleString('ru-RU')} ₽
+                </span>
+                <span className="overlimit-pct">+{c.overPct}%</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-          <div className="card">
-            <h2>Расходы по категориям</h2>
-            <CategoryChart data={chartData} />
-          </div>
+      <div className="card">
+        <h2>Расходы по категориям</h2>
+        <CategoryChart data={chartData} />
+      </div>
 
-          <div className="card">
-            <h2>Динамика по месяцам</h2>
-            <TrendChart data={trendData} />
-          </div>
+      <div className="card">
+        <h2>Динамика по месяцам</h2>
+        <TrendChart data={trendData} />
+      </div>
 
-          <ChatAssistant
-            transactions={transactions}
-            monthTx={monthTx}
-            categories={categories}
-            goals={goals}
-            deposits={deposits}
-            investments={investments}
-            selectedMonth={selectedMonth}
-          />
-        </>
+      <ChatAssistant
+        transactions={transactions}
+        monthTx={monthTx}
+        categories={categories}
+        goals={goals}
+        deposits={deposits}
+        investments={investments}
+        selectedMonth={selectedMonth}
+      />
+      </>
       )}
     </div>
   )
