@@ -47,7 +47,7 @@ describe('buildAnswer', () => {
     }
     const answer = buildAnswer('сколько на еду?', ctx)
     expect(answer).toMatch(/300/)
-    expect(answer).toMatch(/700/) // остаток
+    expect(answer).toMatch(/700/)
   })
 
   it('сообщает о превышении лимита категории', () => {
