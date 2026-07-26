@@ -43,7 +43,7 @@ export default function SavingsGoalDetail() {
     )
     return onSnapshot(q, (snap) => {
       const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      list.sort((a, b) => (a.date < b.date ? 1 : -1))
+      list.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
       setDeposits(list)
     })
   }, [user, id])

@@ -8,8 +8,8 @@ export default function CategoryChart({ data }) {
     <ResponsiveContainer width="100%" height={280}>
       <PieChart>
         <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={2}>
-          {data.map((entry, i) => (
-            <Cell key={i} fill={entry.color} />
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={entry.color} />
           ))}
         </Pie>
         <Tooltip formatter={(v) => `${v.toLocaleString('ru-RU')} ₽`} />

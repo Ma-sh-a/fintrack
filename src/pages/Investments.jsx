@@ -109,11 +109,21 @@ export default function Investments() {
   }
 
   async function handleManualPrice(asset, value) {
-    if (!value) return
-    await updateDoc(doc(db, 'investments', asset.id), {
-      currentPrice: Number(value),
-      lastUpdated: new Date().toISOString(),
-    })
+    const num = Number(value)
+    if (!value || Number.isNaN(num) || num <= 0) {
+      setPriceErrors((e) => ({ ...e, [asset.id]: 'Цена должна быть положительной' }))
+      return
+    }
+    setPriceErrors((e) => ({ ...e, [asset.id]: null }))
+    try {
+      await updateDoc(doc(db, 'investments', asset.id), {
+        currentPrice: num,
+        lastUpdated: new Date().toISOString(),
+      })
+    } catch (err) {
+      console.error('Ошибка сохранения цены:', err)
+      setPriceErrors((e) => ({ ...e, [asset.id]: 'Не удалось сохранить цену' }))
+    }
   }
 
   const enriched = useMemo(() => assets.map(enrichAsset), [assets])
@@ -190,7 +200,7 @@ export default function Investments() {
                 onChange={(e) => setName(e.target.value)}
               />
               <input
-                placeholder="Тикер (например SBER, BTC) — нужен для автообновления цены"
+                placeholder="Тикер (например SBER, BTC) -нужен для автообновления цены"
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value)}
               />
@@ -276,11 +286,11 @@ export default function Investments() {
                     Текущая:{' '}
                     <input
                       type="number"
+                      key={a.currentPrice}
                       className="price-inline-input"
                       defaultValue={a.currentPrice}
                       onBlur={(e) => handleManualPrice(a, e.target.value)}
                     />{' '}
-                    ₽
                   </span>
                   {LIVE_PRICE_TYPES.includes(a.type) && (
                     <button

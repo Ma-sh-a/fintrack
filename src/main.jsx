@@ -4,14 +4,18 @@ import * as Sentry from '@sentry/react'
 import App from './App.jsx'
 import './index.css'
 
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-  environment: import.meta.env.MODE,
-  tracesSampleRate: 0.1,
-})
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0.1,
+  })
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Sentry.ErrorBoundary fallback={<p>Что-то пошло не так. Обновите страницу.</p>}>
+      <App />
+    </Sentry.ErrorBoundary>
   </React.StrictMode>
 )

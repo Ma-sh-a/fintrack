@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -27,13 +27,12 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = () => signInWithPopup(auth, googleProvider)
   const logout = () => signOut(auth)
 
-  return (
-    <AuthContext.Provider value={{ user, loading, register, login, loginWithGoogle, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const value = useMemo(() => ({ user, loading, register, login, loginWithGoogle, logout }), [user, loading])
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
-  return useContext(AuthContext)
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('Функция должна вызываться внутри <AuthProvider>')
+  return ctx
 }
