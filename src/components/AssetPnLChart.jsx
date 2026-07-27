@@ -16,8 +16,8 @@ export default function AssetPnLChart({ data }) {
         />
         <Tooltip formatter={(v) => `${Number(v).toFixed(1)}%`} />
         <Bar dataKey="pnlPct" radius={[0, 3, 3, 0]}>
-          {data.map((d, i) => (
-            <Cell key={i} fill={d.pnlPct >= 0 ? '#447A5F' : '#832D51'} />
+          {data.map((d) => (
+            <Cell key={d.name} fill={d.pnlPct >= 0 ? '#447A5F' : '#832D51'} />
           ))}
         </Bar>
       </BarChart>
