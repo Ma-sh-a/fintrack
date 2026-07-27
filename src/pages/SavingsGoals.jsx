@@ -87,7 +87,6 @@ export default function SavingsGoals() {
     const saved = savedFor(g.id)
     const pct = g.targetAmount > 0 ? Math.round((saved / g.targetAmount) * 100) : 0
     return (
-      
       <Link to={`/savings/${g.id}`} key={g.id} className="goal-card">
         <div className="goal-badge goal-badge-saving">● Копилка</div>
         <div className="goal-card-body">

@@ -11,10 +11,10 @@ export function useCategories() {
 
   useEffect(() => {
     if (!user) {
-    setCategories([])
-    setLoading(false)
-    return
-  }
+      setCategories([])
+      setLoading(false)
+      return
+    }
     setError(null)
     const q = query(collection(db, 'categories'), where('userId', '==', user.uid))
     const unsub = onSnapshot(

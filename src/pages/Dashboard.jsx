@@ -8,6 +8,7 @@ import ChatAssistant from '../components/ChatAssistant'
 import ErrorBanner from '../components/ErrorBanner'
 import { useTransactions } from '../hooks/useTransactions'
 import { useCategories } from '../hooks/useCategories'
+import { spentByCategory } from '../utils/transactionFilters'
 
 const MONTH_LABELS = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
@@ -76,12 +77,11 @@ export default function Dashboard() {
   const chartData = useMemo(() => {
     return categories
       .filter((c) => (c.type || 'expense') === 'expense')
-      .map((c) => {
-        const sum = monthTx
-          .filter((t) => t.type === 'expense' && t.categoryId === c.id)
-          .reduce((s, t) => s + Number(t.amount), 0)
-        return { name: c.name, value: sum, color: c.color }
-      })
+      .map((c) => ({
+        name: c.name,
+        value: spentByCategory(monthTx, c.id),
+        color: c.color,
+      }))
       .filter((c) => c.value > 0)
   }, [categories, monthTx])
 
@@ -89,9 +89,7 @@ export default function Dashboard() {
     return categories
       .filter((c) => (c.type || 'expense') === 'expense' && c.monthlyLimit > 0)
       .map((c) => {
-        const spent = monthTx
-          .filter((t) => t.type === 'expense' && t.categoryId === c.id)
-          .reduce((s, t) => s + Number(t.amount), 0)
+        const spent = spentByCategory(monthTx, c.id)
         const overPct = Math.round(((spent - c.monthlyLimit) / c.monthlyLimit) * 100)
         return { ...c, spent, overPct }
       })

@@ -15,7 +15,6 @@ export function filterCategoriesByType(categories, type) {
   return categories.filter((c) => (c.type || 'expense') === type)
 }
 
-
 export function spentByCategory(transactions, categoryId, monthPrefix) {
   return transactions
     .filter(

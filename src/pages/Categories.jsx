@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore'
 import ErrorBanner from '../components/ErrorBanner'
+import { spentByCategory } from '../utils/transactionFilters'
 
 const COLORS = ['#832D51', '#EA6993', '#447A5F', '#F6C94D', '#CFDD9D', '#F8CAE4']
 
@@ -63,6 +64,7 @@ export default function Categories() {
   }
 
   const expenseCats = categories.filter((c) => (c.type || 'expense') === 'expense')
+  const currentMonth = new Date().toISOString().slice(0, 7)
   const incomeCats = categories.filter((c) => c.type === 'income')
 
   return (
@@ -142,12 +144,7 @@ export default function Categories() {
           {expenseCats
             .filter((c) => c.monthlyLimit > 0)
             .map((c) => {
-              const currentMonth = new Date().toISOString().slice(0, 7)
-              const spent = transactions
-                .filter(
-                  (t) => t.type === 'expense' && t.categoryId === c.id && t.date?.startsWith(currentMonth)
-                )
-                .reduce((s, t) => s + Number(t.amount), 0)
+              const spent = spentByCategory(transactions, c.id, currentMonth)
               const pct = Math.min(100, Math.round((spent / c.monthlyLimit) * 100))
               return (
                 <div key={c.id} className="budget-row">

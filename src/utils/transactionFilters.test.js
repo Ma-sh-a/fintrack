@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { sortByDateDesc, filterTransactions, filterCategoriesByType } from './transactionFilters'
+import {
+  sortByDateDesc,
+  filterTransactions,
+  filterCategoriesByType,
+  spentByCategory,
+} from './transactionFilters'
 
 const sample = [
   { id: '1', type: 'expense', categoryId: 'food', date: '2026-06-01' },
@@ -66,5 +71,30 @@ describe('filterCategoriesByType', () => {
   it('expense включает категории без явного типа (обратная совместимость)', () => {
     const result = filterCategoriesByType(categories, 'expense')
     expect(result.map((c) => c.id)).toEqual(['a', 'c'])
+  })
+})
+
+describe('spentByCategory', () => {
+  const tx = [
+    { type: 'expense', categoryId: 'food', amount: 300, date: '2026-07-05' },
+    { type: 'expense', categoryId: 'food', amount: 200, date: '2026-06-20' },
+    { type: 'income', categoryId: 'food', amount: 999, date: '2026-07-10' },
+    { type: 'expense', categoryId: 'taxi', amount: 150, date: '2026-07-11' },
+  ]
+
+  it('суммирует расходы по категории без фильтра по месяцу', () => {
+    expect(spentByCategory(tx, 'food')).toBe(500)
+  })
+
+  it('фильтрует по месяцу, когда передан monthPrefix', () => {
+    expect(spentByCategory(tx, 'food', '2026-07')).toBe(300)
+  })
+
+  it('не учитывает доходы', () => {
+    expect(spentByCategory(tx, 'food', '2026-07')).not.toBe(1299)
+  })
+
+  it('возвращает 0 для категории без трат', () => {
+    expect(spentByCategory(tx, 'nope', '2026-07')).toBe(0)
   })
 })
