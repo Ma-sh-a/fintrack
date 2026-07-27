@@ -8,8 +8,8 @@ export default function GroupedPieChart({ data, emptyText }) {
     <ResponsiveContainer width="100%" height={240}>
       <PieChart>
         <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-          {data.map((entry, i) => (
-            <Cell key={i} fill={entry.color} />
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={entry.color} />
           ))}
         </Pie>
         <Tooltip formatter={(v) => `${Number(v).toLocaleString('ru-RU')} ₽`} />
