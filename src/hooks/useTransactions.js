@@ -10,7 +10,11 @@ export function useTransactions() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+    setTransactions([])
+    setLoading(false)
+    return
+  }
     setError(null)
     const q = query(collection(db, 'transactions'), where('userId', '==', user.uid))
     const unsub = onSnapshot(

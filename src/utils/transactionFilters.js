@@ -1,5 +1,5 @@
 export function sortByDateDesc(transactions) {
-  return [...transactions].sort((a, b) => (a.date < b.date ? 1 : -1))
+  return [...transactions].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 }
 
 export function filterTransactions(transactions, { type = 'all', categoryId = 'all' } = {}) {
@@ -13,4 +13,16 @@ export function filterTransactions(transactions, { type = 'all', categoryId = 'a
 export function filterCategoriesByType(categories, type) {
   if (type === 'all') return categories
   return categories.filter((c) => (c.type || 'expense') === type)
+}
+
+
+export function spentByCategory(transactions, categoryId, monthPrefix) {
+  return transactions
+    .filter(
+      (t) =>
+        t.type === 'expense' &&
+        t.categoryId === categoryId &&
+        (!monthPrefix || t.date?.startsWith(monthPrefix))
+    )
+    .reduce((s, t) => s + Number(t.amount), 0)
 }
