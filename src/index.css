@@ -27,6 +27,12 @@ body {
   font-family: var(--font);
 }
 
+html,
+body {
+  min-height: 100%;
+  background: var(--paper);
+}
+
 button,
 input,
 select {
@@ -138,7 +144,8 @@ h2 {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 90vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding: 20px;
   background: var(--ink);
 }
