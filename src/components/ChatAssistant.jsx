@@ -61,8 +61,8 @@ export default function ChatAssistant({
             </button>
           </div>
           <div className="chat-messages" ref={listRef}>
-            {messages.map((m, i) => (
-              <div key={i} className={`chat-bubble chat-${m.from}`}>
+            {messages.map((m) => (
+              <div key={m.text} className={`chat-bubble chat-${m.from}`}>
                 {m.text}
               </div>
             ))}
